@@ -321,7 +321,7 @@ namespace ClassicalSharp {
 				TexturePackExtractor extractor = new TexturePackExtractor();
 				extractor.Extract( game.DefaultTexturePack, game );
 				game.Map.TextureUrl = null;
-			} else if( Utils.IsUrlPrefix( url ) ) {
+			} else if( Utils.IsUrlPrefix( url, 0 ) ) {
 				RetrieveTexturePack( url );
 			}
 			Utils.LogDebug( "Image url: " + url );
@@ -475,6 +475,7 @@ namespace ClassicalSharp {
 			int* indices = stackalloc int[bulkCount];
 			for( int i = 0; i < count; i++ )
 				indices[i] = reader.ReadInt32();
+			reader.Skip( (bulkCount - count) * sizeof(int) );
 			
 			for( int i = 0; i < count; i++ ) {
 				byte block = reader.ReadUInt8();
@@ -486,6 +487,7 @@ namespace ClassicalSharp {
 				}
 				game.UpdateBlock( coords.X, coords.Y, coords.Z, block );
 			}
+			reader.Skip( bulkCount - count );
 		}
 		
 		void HandleSetTextColor() {
@@ -498,6 +500,23 @@ namespace ClassicalSharp {
 			   || (code >= 'A' && code <= 'F') ) return; // Standard chars cannot be used.
 			game.Drawer2D.Colours[code] = col;
 			game.Events.RaiseColourCodesChanged();
+		}
+		
+		void HandleDefineModel() {
+			int start = reader.index - 1;
+			byte modelId = reader.ReadUInt8();
+			switch( reader.ReadUInt8() ) {
+				case 0: // setup
+					break;
+				case 1: // metadata
+					break;
+				case 2: // define part
+					break;
+				case 3: // rotation
+					break;
+			}
+			int read = reader.index - start;
+			// TODO: skip remaining data
 		}
 		
 		internal static SoundType[] stepSnds, breakSnds;
